@@ -7,7 +7,6 @@ import (
 	"github.com/rh-ecosystem-edge/eco-goinfra/pkg/reportxml"
 	"github.com/rh-ecosystem-edge/eco-gotests/tests/hw-accel/kmm/1upgrade/internal/tsparams"
 	_ "github.com/rh-ecosystem-edge/eco-gotests/tests/hw-accel/kmm/1upgrade/tests"
-	"github.com/rh-ecosystem-edge/eco-gotests/tests/hw-accel/kmm/internal/kmmparams"
 	"github.com/rh-ecosystem-edge/eco-gotests/tests/internal/reporter"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -31,5 +30,5 @@ var _ = ReportAfterSuite("1upgrade", func(report Report) {
 
 var _ = JustAfterEach(func() {
 	reporter.ReportIfFailed(
-		CurrentSpecReport(), currentFile, map[string]string{kmmparams.KmmOperatorNamespace: "op"}, nil)
+		CurrentSpecReport(), currentFile, tsparams.ReporterNamespacesToDump, tsparams.ReporterCRDsToDump)
 })
