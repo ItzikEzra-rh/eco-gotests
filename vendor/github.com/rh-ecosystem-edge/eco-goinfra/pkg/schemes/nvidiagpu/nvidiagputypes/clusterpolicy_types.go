@@ -921,6 +921,13 @@ type DCGMExporterSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Service configuration for NVIDIA DCGM Exporter"
 	ServiceSpec *DCGMExporterServiceConfig `json:"service,omitempty"`
+
+	// HostPID allows the DCGM-Exporter daemon set to access the host's PID namespace
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Enable hostPID for NVIDIA DCGM Exporter"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+	HostPID *bool `json:"hostPID,omitempty"`
 }
 
 // DCGMExporterMetricsConfig defines metrics to be collected by NVIDIA DCGM Exporter
@@ -1113,11 +1120,19 @@ type DriverCertConfigSpec struct {
 
 // DriverLicensingConfigSpec defines licensing server configuration for NVIDIA Driver container
 type DriverLicensingConfigSpec struct {
+	// Deprecated: ConfigMapName has been deprecated in favour of SecretName. Please use secrets to handle the licensing server configuration more securely
 	// +kubebuilder:validation:Optional
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="ConfigMap Name"
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:text"
 	ConfigMapName string `json:"configMapName,omitempty"`
+
+	// SecretName indicates the name of the secret containing the licensing token
+	// +kubebuilder:validation:Optional
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Secret Name"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:text"
+	SecretName string `json:"secretName,omitempty"`
 
 	// NLSEnabled indicates if NVIDIA Licensing System is used for licensing.
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
@@ -1893,6 +1908,14 @@ func (d *DriverSpec) OpenKernelModulesEnabled() bool {
 	return d.KernelModuleType == "open"
 }
 
+// IsVGPULicensingEnabled returns true if the vgpu driver license config is provided
+func (d *DriverSpec) IsVGPULicensingEnabled() bool {
+	if d.LicensingConfig == nil {
+		return false
+	}
+	return d.LicensingConfig.ConfigMapName != "" || d.LicensingConfig.SecretName != ""
+}
+
 // IsEnabled returns true if device-plugin is enabled(default) through gpu-operator
 func (p *DevicePluginSpec) IsEnabled() bool {
 	if p.Enabled == nil {
@@ -1909,6 +1932,15 @@ func (e *DCGMExporterSpec) IsEnabled() bool {
 		return true
 	}
 	return *e.Enabled
+}
+
+// IsHostPIDEnabled returns true if hostPID is enabled for DCGM Exporter
+func (e *DCGMExporterSpec) IsHostPIDEnabled() bool {
+	if e.HostPID == nil {
+		// default is false if not specified by user
+		return false
+	}
+	return *e.HostPID
 }
 
 // IsEnabled returns true if gpu-feature-discovery is enabled(default) through gpu-operator
